@@ -1,26 +1,14 @@
 #!/bin/sh
 
-set -- $(cat /proc/cmdline)
+set -- $(cat /proc/cmndline)
 
-for opt; do
-	case "$opt" in
-		cryptroot=*)
-			KOPT_cryptroot=${opt#cryptroot=}
-			continue
-			;;
-		cryptdm=*)
-			KOPT_cryptdm=${opt#cryptdm=}
-			continue
-			;;
-		root=*)
-			KOPT_root=${opt#root=}
-			continue
-			;;
-	esac
-done
+cryptopts=$(cat /etc/dropbear/cryptopts)
+echo "Debug: "
+echo "$cryptopts"
+echo "$KOPT_root"
 
 while [ ! -b /dev/mapper/${KOPT_cryptdm} ]; do
-	/sbin/nlplug-findfs -c ${KOPT_cryptroot} -m ${KOPT_cryptdm} ${KOPT_debug_init:+-d} -p /sbin/mdev ${KOPT_root}
+	nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} $KOPT_root
 	sleep 2
 done
 
