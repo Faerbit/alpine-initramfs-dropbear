@@ -11,13 +11,14 @@ makedepends="patch mkinitfs"
 install=""
 options="!check"
 source="initramfs-init-dropbear.patch unlock_disk dropbear.files dropbear.modules"
+builddir="$srcdir/$pkgname-$pkgver"
 
 build() {
-    patch /usr/share/mkinitfs/initramfs-init "${srcdir}initramfs-init-dropbear.patch" -o "${srcdir}initramfs-init-dropbear"
+    patch /usr/share/mkinitfs/initramfs-init "${srcdir}/initramfs-init-dropbear.patch" -o "${builddir}/initramfs-init-dropbear"
 }
 
 package() {
-    install -m755 -D "${srcdir}/initramfs-init-dropbear" "${pkgdir}/usr/share/mkinitfs/initramfs-init-dropbear"
+    install -m755 -D "${builddir}/initramfs-init-dropbear" "${pkgdir}/usr/share/mkinitfs/initramfs-init-dropbear"
     install -m755 -D "${srcdir}/unlock_disk" "${pkgdir}/etc/dropbear/unlock_disk"
     install -m644 -D "${srcdir}/dropbear.files" "${pkgdir}/etc/mkinitfs/features.d/dropbear.files"
     install -m644 -D "${srcdir}/dropbear.modules" "${pkgdir}/etc/mkinitfs/features.d/dropbear.modules"
