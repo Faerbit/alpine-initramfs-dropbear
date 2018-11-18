@@ -206,7 +206,7 @@ configure_ip() {
 		fi
 		ebegin "Obtaining IP via DHCP ($device)..."
 		ifconfig $device 0.0.0.0
-		udhcpc -i $device -f -q
+		timeout udhcpc -i $device -f -q
 		eend $?
 	else
 		# manual configuration
@@ -255,7 +255,9 @@ find_boot_repositories() {
 }
 
 setup_dropbear() {
-    echo "${1}" > /etc/dropbear/cryptopts
+	set > /etc/dropbear/init-env
+	chmod +x /etc/dropbear/init-env
+
 	# set the unlock_disk script as shell for root
 	sed -i 's|\(root:x:0:0:root:/root:\).*$|\1/etc/dropbear/unlock_disk|' /etc/passwd
 	echo '/etc/dropbear/unlock_disk' > /etc/shells
@@ -420,7 +422,8 @@ if [ -n "$KOPT_cryptroot" ]; then
 fi
 
 if [ "$KOPT_dropbear" = "yes" ]; then
-    setup_dropbear "$cryptopts"
+	configure_ip
+	setup_dropbear
 fi
 
 if [ -n "$KOPT_nbd" ]; then
@@ -441,6 +444,7 @@ if [ -n "$KOPT_root" ]; then
 	ebegin "Mounting root"
 	nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} \
 		$KOPT_root
+	killall -9 dropbear
 
 	if echo "$KOPT_modules $KOPT_rootfstype" | grep -qw btrfs; then
 		/sbin/btrfs device scan >/dev/null || \

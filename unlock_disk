@@ -1,15 +1,11 @@
 #!/bin/sh
 
-set -- $(cat /proc/cmndline)
-
-cryptopts=$(cat /etc/dropbear/cryptopts)
-echo "Debug: "
-echo "$cryptopts"
-echo "$KOPT_root"
+source /etc/dropbear/init-env
 
 while [ ! -b /dev/mapper/${KOPT_cryptdm} ]; do
-	nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} $KOPT_root
+	/sbin/nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} $KOPT_root
 	sleep 2
 done
 
+killall -9 nlplug-findfs
 killall -9 dropbear
