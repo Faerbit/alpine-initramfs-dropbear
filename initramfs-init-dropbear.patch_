@@ -11,7 +11,7 @@ index 7f5f36c..25364df 100755
  		eend $?
  	else
  		# manual configuration
-@@ -254,6 +254,23 @@ find_boot_repositories() {
+@@ -254,6 +254,21 @@ find_boot_repositories() {
  	fi
  }
  
@@ -28,14 +28,12 @@ index 7f5f36c..25364df 100755
 +	mv /etc/dropbear/authorized_keys /root/.ssh
 +
 +	dropbear -R -E -s -j -k
-+
-+	#[ -b /dev/mapper/${KOPT_cryptdm} ] || return 1
 +}
 +
  setup_nbd() {
  	modprobe -q nbd max_part=8 || return 1
  	local IFS=, n=0
-@@ -274,7 +291,7 @@ setup_nbd() {
+@@ -274,7 +289,7 @@ setup_nbd() {
  set -- $(cat /proc/cmdline)
  
  myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader cryptoffset
@@ -44,7 +42,7 @@ index 7f5f36c..25364df 100755
  	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
  	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key"
  
-@@ -404,6 +421,11 @@ if [ -n "$KOPT_cryptroot" ]; then
+@@ -404,6 +419,11 @@ if [ -n "$KOPT_cryptroot" ]; then
  	fi
  fi
  
@@ -56,7 +54,7 @@ index 7f5f36c..25364df 100755
  if [ -n "$KOPT_nbd" ]; then
  	configure_ip
  	setup_nbd || echo "Failed to setup nbd device."
-@@ -422,6 +444,7 @@ if [ -n "$KOPT_root" ]; then
+@@ -422,6 +442,7 @@ if [ -n "$KOPT_root" ]; then
  	ebegin "Mounting root"
  	nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} \
  		$KOPT_root
