@@ -1,0 +1,66 @@
+diff --git a/initramfs-init b/initramfs-init-dropbear
+index 7f5f36c..25364df 100755
+--- a/initramfs-init
++++ b/initramfs-init-dropbear
+@@ -206,7 +206,7 @@ configure_ip() {
+ 		fi
+ 		ebegin "Obtaining IP via DHCP ($device)..."
+ 		ifconfig $device 0.0.0.0
+-		udhcpc -i $device -f -q
++		timeout udhcpc -i $device -f -q
+ 		eend $?
+ 	else
+ 		# manual configuration
+@@ -254,6 +254,23 @@ find_boot_repositories() {
+ 	fi
+ }
+ 
++setup_dropbear() {
++	set > /etc/dropbear/init-env
++	chmod +x /etc/dropbear/init-env
++
++	# set the unlock_disk script as shell for root
++	sed -i 's|\(root:x:0:0:root:/root:\).*$|\1/etc/dropbear/unlock_disk|' /etc/passwd
++	echo '/etc/dropbear/unlock_disk' > /etc/shells
++
++	# transfer authorized_keys
++	mkdir -p /root/.ssh
++	mv /etc/dropbear/authorized_keys /root/.ssh
++
++	dropbear -R -E -s -j -k
++
++	#[ -b /dev/mapper/${KOPT_cryptdm} ] || return 1
++}
++
+ setup_nbd() {
+ 	modprobe -q nbd max_part=8 || return 1
+ 	local IFS=, n=0
+@@ -274,7 +291,7 @@ setup_nbd() {
+ set -- $(cat /proc/cmdline)
+ 
+ myopts="alpine_dev autodetect autoraid chart cryptroot cryptdm cryptheader cryptoffset
+-	cryptdiscards cryptkey debug_init dma init_args keep_apk_new modules ovl_dev
++	cryptdiscards cryptkey dropbear debug_init dma init_args keep_apk_new modules ovl_dev
+ 	pkgs quiet root_size root usbdelay ip alpine_repo apkovl alpine_start splash
+ 	blacklist overlaytmpfs rootfstype rootflags nbd resume s390x_net dasd ssh_key"
+ 
+@@ -404,6 +421,11 @@ if [ -n "$KOPT_cryptroot" ]; then
+ 	fi
+ fi
+ 
++if [ "$KOPT_dropbear" = "yes" ]; then
++	configure_ip
++	setup_dropbear
++fi
++
+ if [ -n "$KOPT_nbd" ]; then
+ 	configure_ip
+ 	setup_nbd || echo "Failed to setup nbd device."
+@@ -422,6 +444,7 @@ if [ -n "$KOPT_root" ]; then
+ 	ebegin "Mounting root"
+ 	nlplug-findfs $cryptopts -p /sbin/mdev ${KOPT_debug_init:+-d} \
+ 		$KOPT_root
++	killall -9 dropbear
+ 
+ 	if echo "$KOPT_modules $KOPT_rootfstype" | grep -qw btrfs; then
+ 		/sbin/btrfs device scan >/dev/null || \
